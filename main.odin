@@ -3,17 +3,18 @@ package main
 import "core:fmt"
 import "core:mem"
 import rl "vendor:raylib"
+import "core:net"
 
 screenWidth: i32 = 1600
 screenHeight: i32 = 900
 
-cam := Camera{
-	bounds = rl.Rectangle{
+cam := Camera {
+	bounds = rl.Rectangle {
 		x = -800,
 		y = -450,
 		width = f32(screenWidth),
 		height = f32(screenHeight),
-	}
+	},
 }
 
 currChunks: Chunks
@@ -41,30 +42,28 @@ main :: proc() {
 		}
 	}
 
-	currChunks = Chunks{
+	currChunks.named = ChunksNamed {
 		createChunk(f32(-screenWidth), f32(-screenHeight), 15),
 		createChunk(0, f32(-screenHeight), 15),
 		createChunk(f32(-screenWidth), 0, 15),
 		createChunk(0, 0, 15),
 	}
-	
-	populateChunk(&currChunks.topLeft)
-	populateChunk(&currChunks.topRight)
-	populateChunk(&currChunks.botLeft)
-	populateChunk(&currChunks.botRight)
+
+	for &star in currChunks.index {
+		populateChunk(&star)
+	}
 
 	rl.InitWindow(screenWidth, screenHeight, "VonNeumann")
 	rl.SetWindowState({.VSYNC_HINT})
 
-	for !rl.WindowShouldClose() {	
+	for !rl.WindowShouldClose() {
 		update(rl.GetFrameTime())
 		render()
 	}
 
-	deinitChunk(&currChunks.topLeft)
-	deinitChunk(&currChunks.topRight)
-	deinitChunk(&currChunks.botLeft)
-	deinitChunk(&currChunks.botRight)
+	for &star in currChunks.index {
+		deinitChunk(&star)
+	}
 }
 
 update :: proc(dt: f32) {
@@ -76,16 +75,19 @@ render :: proc() {
 	rl.BeginDrawing()
 
 	rl.ClearBackground(rl.RAYWHITE)
-	
-	rl.DrawFPS(10, 10)
-	renderChunk(currChunks.topLeft, &cam)
-	renderChunk(currChunks.topRight, &cam)
-	renderChunk(currChunks.botLeft, &cam)
-	renderChunk(currChunks.botRight, &cam)
-	renderDebugLines(currChunks.topLeft, &cam)
-	renderDebugLines(currChunks.topRight, &cam)
-	renderDebugLines(currChunks.botLeft, &cam)
-	renderDebugLines(currChunks.botRight, &cam)
 
+	rl.DrawFPS(10, 10)
+	renderCamMode(&cam)
+
+	switch cam.mode {
+	case .Galaxy:
+		for star in currChunks.index {
+			renderChunk(star, &cam)
+			renderDebugLines(star, &cam)
+		}
+	case .StarSystem:
+		renderStarSystem(cam.star, &cam)
+	}
+	
 	rl.EndDrawing()
 }

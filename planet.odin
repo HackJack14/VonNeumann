@@ -1,47 +1,77 @@
 package main
 
 import rl "vendor:raylib"
+import "core:fmt"
 
 Planet :: struct {
   position: rl.Vector2,
   radius: f32,
 }
 
-Chunk :: struct {
-  bounds: rl.Rectangle,
+StarSystem :: struct {
+  position: rl.Vector2,
+  radius: f32,
   planets: []Planet,
-  numPlanets: u32,
+  color: rl.Color,
 }
 
-Chunks :: struct {
+Chunk :: struct {
+  bounds: rl.Rectangle,
+  stars: []StarSystem,
+  numStars: u32,
+}
+
+Chunks :: struct #raw_union {
+  named: ChunksNamed,
+  index: ChunksIndex,
+}
+
+ChunksNamed :: struct {
   topLeft: Chunk,
   topRight: Chunk,
   botLeft: Chunk,
   botRight: Chunk,
 }
 
-createChunk :: proc(x: f32, y: f32, numPlanets: u32) -> Chunk {
+ChunksIndex :: [4]Chunk
+
+populateStarSystem :: proc(star: ^StarSystem) {
+  rl.SetRandomSeed(hashPosition(star.position.x, star.position.y))
+  for &planet in star.planets {
+    planet = Planet {
+      position = rl.Vector2 {
+        f32(rl.GetRandomValue(0, screenWidth)),
+        f32(rl.GetRandomValue(0, screenHeight)),
+      },
+      radius = 30
+    }
+  }
+}
+
+createChunk :: proc(x: f32, y: f32, numStars: u32) -> Chunk {
   return Chunk{
-    bounds = rl.Rectangle{
+    bounds = rl.Rectangle {
       x = x,
       y = y,
       width = f32(screenWidth),
       height = f32(screenHeight),
     },
-    numPlanets = numPlanets,
-    planets = make([]Planet, 15),
+    numStars = numStars,
+    stars = make([]StarSystem, 15),
   }
 }
 
 populateChunk :: proc(chunk: ^Chunk) {
   rl.SetRandomSeed(hashPosition(chunk.bounds.x, chunk.bounds.y));
-  for &planet in chunk.planets {
-    planet = Planet{
+  for &star in chunk.stars {
+    star = StarSystem{
       position = rl.Vector2{
         f32(rl.GetRandomValue(i32(chunk.bounds.x), i32(chunk.bounds.x) + screenWidth)),
         f32(rl.GetRandomValue(i32(chunk.bounds.y), i32(chunk.bounds.y) + screenHeight)),
       },
-      radius = 15
+      radius = 15,
+      planets = make([]Planet, 5),
+      color = rl.Color { u8(rl.GetRandomValue(0, 255)), 0, u8(rl.GetRandomValue(0, 50)), 255 },
     };
   }
 }
@@ -54,11 +84,40 @@ hashPosition :: proc(x: f32, y: f32) -> u32 {
   return (u32)(ux >> 16)
 }
 
+starMouseHovered :: proc(star: ^StarSystem, cam: ^Camera) -> bool {
+  mousePos := rl.GetMousePosition()
+  mousePos = getAbsVec(cam, mousePos)
+  return CheckCollisionPointCircleASD(mousePos, star.position, star.radius)
+}
+
 deinitChunk :: proc(chunk: ^Chunk) {
-  delete(chunk.planets)
+  for &star in chunk.stars {
+    deinitStarSystem(&star)
+  }
+  delete(chunk.stars)
+}
+
+deinitStarSystem :: proc(star: ^StarSystem) {
+  delete(star.planets)
 }
 
 updateChunks :: proc(chunks: ^Chunks, cam: ^Camera) {  
+  if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) {
+    for chunk in chunks.index {
+      for &star in chunk.stars {
+        if starMouseHovered(&star, cam) {
+          switchToStarView(cam, &star)
+        }
+      }
+    }
+  }
+  if rl.IsKeyPressed(.Q) {
+    switchToGalaxyView(cam)
+  }
+  loadNewChunks(&chunks.named, cam)
+}
+
+loadNewChunks :: proc(chunks: ^ChunksNamed, cam: ^Camera) {
   // Check if camera is out of bounds horizontally
   if chunks.topLeft.bounds.x > cam.bounds.x {
     deinitChunk(&chunks.topRight)
@@ -99,5 +158,5 @@ updateChunks :: proc(chunks: ^Chunks, cam: ^Camera) {
     chunks.botRight = createChunk(chunks.topRight.bounds.x, chunks.topRight.bounds.y + chunks.topRight.bounds.height, 15)
     populateChunk(&chunks.botLeft)
     populateChunk(&chunks.botRight)
-  }
+  } 
 }

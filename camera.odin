@@ -2,22 +2,36 @@ package main
 
 import rl "vendor:raylib"
 
+CamMode :: enum { Galaxy, StarSystem }
+
+CamModeString :: [CamMode]string {
+  .Galaxy = "Galaxy",
+  .StarSystem = "Star System",
+}
+
 Camera :: struct {
   bounds: rl.Rectangle,
+  mode: CamMode,
+  star: StarSystem,
 }
 
 updateCamera :: proc(cam: ^Camera, dt: f32) {
-  if rl.IsKeyDown(rl.KeyboardKey.W) {
-    cam.bounds.y -= 500 * dt
-  }
-  if rl.IsKeyDown(rl.KeyboardKey.S) {
-    cam.bounds.y += 500 * dt
-  }
-  if rl.IsKeyDown(rl.KeyboardKey.A) {
-    cam.bounds.x -= 500 * dt
-  }
-  if rl.IsKeyDown(rl.KeyboardKey.D) {
-    cam.bounds.x += 500 * dt
+  switch cam.mode {
+  case .Galaxy:
+    if rl.IsKeyDown(.W) {
+      cam.bounds.y -= 500 * dt
+    }
+    if rl.IsKeyDown(.S) {
+      cam.bounds.y += 500 * dt
+    }
+    if rl.IsKeyDown(.A) {
+      cam.bounds.x -= 500 * dt
+    }
+    if rl.IsKeyDown(.D) {
+      cam.bounds.x += 500 * dt
+    }
+  case .StarSystem:
+    
   }
 }
 
@@ -31,4 +45,27 @@ getRelY :: proc(cam: ^Camera, posY: f32) -> f32 {
 
 getRelVec :: proc(cam: ^Camera, vec: rl.Vector2) -> rl.Vector2 {
   return rl.Vector2{ getRelX(cam, vec.x), getRelY(cam, vec.y) }
+}
+
+getAbsX :: proc(cam: ^Camera, posX: f32) -> f32 {
+  return posX + cam.bounds.x
+}
+
+getAbsY :: proc(cam: ^Camera, posY: f32) -> f32 {
+  return posY + cam.bounds.y
+}
+
+getAbsVec :: proc(cam: ^Camera, vec: rl.Vector2) -> rl.Vector2 {
+  return rl.Vector2{ getAbsX(cam, vec.x), getAbsY(cam, vec.y) }
+}
+
+switchToStarView :: proc(cam: ^Camera, star: ^StarSystem) {
+  cam.mode = .StarSystem
+  populateStarSystem(star)
+  cam.star = star^
+}
+
+switchToGalaxyView :: proc(cam: ^Camera) {
+  cam.mode = .Galaxy
+  deinitStarSystem(&cam.star)
 }
