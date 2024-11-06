@@ -2,6 +2,12 @@ package main
 
 import rl "vendor:raylib"
 
-CheckCollisionPointCircleASD :: proc(point: rl.Vector2, center: rl.Vector2, radius: f32) -> bool {
-  return rl.Vector2Distance(point, center) < radius
+checkCollisionChunk :: proc(star: StarSystem, chunk: Chunk) -> bool {
+  for otherStar in chunk.stars {
+    collision := rl.CheckCollisionCircles(star.position, star.radius, otherStar.position, otherStar.radius)
+    if collision {
+      return true
+    }
+  }
+  return false
 }

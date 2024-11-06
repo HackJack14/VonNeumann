@@ -9,7 +9,7 @@ renderStarFromGalaxy :: proc(star: StarSystem, cam: ^Camera) {
 
 renderStarSystem :: proc(star: StarSystem, cam: ^Camera) {
   // Draw star in the middle of screen
-  rl.DrawCircle(screenWidth/2, screenHeight/2, star.radius, star.color)
+  rl.DrawCircle(screenWidth/2, screenHeight/2, star.radius * 4, star.color)
 
   //Draw planets around star
   for pl in star.planets {
@@ -39,4 +39,8 @@ renderCamMode :: proc(cam: ^Camera) {
   defer delete(modeAsCString)
   
   rl.DrawText(modeAsCString, 10, 30, 20, rl.GREEN)
+}
+
+clearBackgroundTexture :: proc(texture: ^rl.Texture2D) {
+  rl.DrawTexture(texture^, 0, 0, rl.Color{0, 0, 0, 0})
 }

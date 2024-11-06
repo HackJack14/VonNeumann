@@ -1,6 +1,7 @@
 package main
 
 import rl "vendor:raylib"
+import "core:fmt"
 
 CamMode :: enum { Galaxy, StarSystem }
 

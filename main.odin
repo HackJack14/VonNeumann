@@ -18,6 +18,7 @@ cam := Camera {
 }
 
 currChunks: Chunks
+backgroundTexture: rl.Texture2D
 
 main :: proc() {
 	when ODIN_DEBUG {
@@ -42,6 +43,10 @@ main :: proc() {
 		}
 	}
 
+	backgroundImg := rl.LoadImage("res/background.jpg")
+	rl.ImageResize(&backgroundImg, screenWidth, screenHeight)
+	backgroundTexture := rl.LoadTextureFromImage(backgroundImg)
+
 	currChunks.named = ChunksNamed {
 		createChunk(f32(-screenWidth), f32(-screenHeight), 15),
 		createChunk(0, f32(-screenHeight), 15),
@@ -64,6 +69,8 @@ main :: proc() {
 	for &star in currChunks.index {
 		deinitChunk(&star)
 	}
+	rl.UnloadTexture(backgroundTexture)
+	rl.UnloadImage(backgroundImg)
 }
 
 update :: proc(dt: f32) {
@@ -74,7 +81,8 @@ update :: proc(dt: f32) {
 render :: proc() {
 	rl.BeginDrawing()
 
-	rl.ClearBackground(rl.RAYWHITE)
+	rl.ClearBackground(rl.RED)
+	clearBackgroundTexture(&backgroundTexture)
 
 	rl.DrawFPS(10, 10)
 	renderCamMode(&cam)
@@ -83,7 +91,7 @@ render :: proc() {
 	case .Galaxy:
 		for star in currChunks.index {
 			renderChunk(star, &cam)
-			renderDebugLines(star, &cam)
+			// renderDebugLines(star, &cam)
 		}
 	case .StarSystem:
 		renderStarSystem(cam.star, &cam)
