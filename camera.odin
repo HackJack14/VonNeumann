@@ -4,6 +4,8 @@ import rl "vendor:raylib"
 import "core:fmt"
 
 CamMode :: enum { Galaxy, StarSystem }
+DebugMode :: enum { ChunkOuline }
+DebugModes :: bit_set[DebugMode]
 
 CamModeString :: [CamMode]string {
   .Galaxy = "Galaxy",
@@ -13,6 +15,7 @@ CamModeString :: [CamMode]string {
 Camera :: struct {
   bounds: rl.Rectangle,
   mode: CamMode,
+  debugModes: DebugModes,
   star: StarSystem,
 }
 
@@ -30,6 +33,14 @@ updateCamera :: proc(cam: ^Camera, dt: f32) {
     }
     if rl.IsKeyDown(.D) {
       cam.bounds.x += 500 * dt
+    }
+    
+    if rl.IsKeyPressed(.O) {
+      if DebugMode.ChunkOuline in cam.debugModes {
+        cam.debugModes = cam.debugModes - { .ChunkOuline }
+      } else {
+        cam.debugModes = cam.debugModes + { .ChunkOuline }
+      }
     }
   case .StarSystem:
     

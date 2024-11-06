@@ -41,6 +41,6 @@ renderCamMode :: proc(cam: ^Camera) {
   rl.DrawText(modeAsCString, 10, 30, 20, rl.GREEN)
 }
 
-clearBackgroundTexture :: proc(texture: ^rl.Texture2D) {
-  rl.DrawTexture(texture^, 0, 0, rl.Color{0, 0, 0, 0})
+renderBackgroundTexture :: proc(texture: ^rl.Texture2D) {
+  rl.DrawTexture(texture^, 0, 0, rl.WHITE)
 }

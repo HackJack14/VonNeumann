@@ -43,10 +43,6 @@ main :: proc() {
 		}
 	}
 
-	backgroundImg := rl.LoadImage("res/background.jpg")
-	rl.ImageResize(&backgroundImg, screenWidth, screenHeight)
-	backgroundTexture := rl.LoadTextureFromImage(backgroundImg)
-
 	currChunks.named = ChunksNamed {
 		createChunk(f32(-screenWidth), f32(-screenHeight), 15),
 		createChunk(0, f32(-screenHeight), 15),
@@ -61,6 +57,11 @@ main :: proc() {
 	rl.InitWindow(screenWidth, screenHeight, "VonNeumann")
 	rl.SetWindowState({.VSYNC_HINT})
 
+	backgroundImg := rl.LoadImage("res/background.png")
+	rl.ImageResize(&backgroundImg, screenWidth, screenHeight)
+	backgroundTexture = rl.LoadTextureFromImage(backgroundImg)
+	rl.UnloadImage(backgroundImg)
+
 	for !rl.WindowShouldClose() {
 		update(rl.GetFrameTime())
 		render()
@@ -70,7 +71,6 @@ main :: proc() {
 		deinitChunk(&star)
 	}
 	rl.UnloadTexture(backgroundTexture)
-	rl.UnloadImage(backgroundImg)
 }
 
 update :: proc(dt: f32) {
@@ -81,17 +81,19 @@ update :: proc(dt: f32) {
 render :: proc() {
 	rl.BeginDrawing()
 
-	rl.ClearBackground(rl.RED)
-	clearBackgroundTexture(&backgroundTexture)
+	rl.ClearBackground(rl.WHITE)
+	renderBackgroundTexture(&backgroundTexture)
 
 	rl.DrawFPS(10, 10)
 	renderCamMode(&cam)
 
 	switch cam.mode {
 	case .Galaxy:
-		for star in currChunks.index {
-			renderChunk(star, &cam)
-			// renderDebugLines(star, &cam)
+		for chunk in currChunks.index {
+			renderChunk(chunk, &cam)
+			if DebugMode.ChunkOuline in cam.debugModes {
+				renderDebugLines(chunk, &cam)
+			}
 		}
 	case .StarSystem:
 		renderStarSystem(cam.star, &cam)

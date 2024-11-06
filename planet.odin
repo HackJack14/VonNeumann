@@ -82,13 +82,13 @@ hashPosition :: proc(x: f32, y: f32) -> u32 {
 randomStarColor :: proc() -> rl.Color {
 	switch rl.GetRandomValue(0, 2) {
 	case 0:
-		return rl.Color { 94, 190, 235, 255 }
+		return rl.Color { 94, 190, 235, 220 }
 	case 1:
-		return rl.Color { 245, 117, 12, 255 }
+		return rl.Color { 245, 117, 12, 220 }
 	case 2:
-		return rl.Color { 250, 226, 7, 255 }
+		return rl.Color { 250, 226, 7, 220 }
 	}
-	return rl.Color { 250, 226, 7, 255 }
+	return rl.Color { 250, 226, 7, 220 }
 }
 
 starMouseHovered :: proc(star: ^StarSystem, cam: ^Camera) -> bool {
