@@ -3,7 +3,6 @@ package main
 import "core:fmt"
 import "core:mem"
 import rl "vendor:raylib"
-import "core:net"
 
 screenWidth: i32 = 1600
 screenHeight: i32 = 900
@@ -66,7 +65,8 @@ main :: proc() {
 		update(rl.GetFrameTime())
 		render()
 	}
-
+	rl.CloseWindow()
+	
 	for &star in currChunks.index {
 		deinitChunk(&star)
 	}
