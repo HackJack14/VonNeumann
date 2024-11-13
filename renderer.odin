@@ -2,6 +2,7 @@ package main
 
 import "core:strings"
 import rl "vendor:raylib"
+import gl "vendor:raylib/rlgl"
 
 textureType :: enum {
 	BACKGROUND,
@@ -31,7 +32,7 @@ initTextures :: proc() {
 	
 	//Starship texture
 	starshipImg := rl.LoadImage("res/starship.png")
-	rl.ImageResize(&starshipImg, 30, 30)
+	rl.ImageResize(&starshipImg, 35, 40)
 	textures[.STARSHIP] = rl.LoadTextureFromImage(starshipImg)
 	rl.UnloadImage(starshipImg)
 }
@@ -106,5 +107,14 @@ renderBackgroundTexture :: proc() {
 }
 
 renderStarShip :: proc(ship: Starship, cam: ^Camera) {
-	rl.DrawTextureEx(textures[.STARSHIP], getRelVec(cam, ship.position), ship.rotation, 1, rl.WHITE)
+	position := rl.Vector2 {
+		getRelX(cam, ship.position.x) - f32(textures[.STARSHIP].width)/2,
+		getRelY(cam, ship.position.y) - f32(textures[.STARSHIP].height)/2,
+	}
+	gl.PushMatrix()
+	gl.Translatef(position.x, position.y, 0)
+	gl.Rotatef(ship.rotation, 0, 0, -1)
+	// rl.DrawTextureEx(textures[.STARSHIP], position, ship.rotation, 1, rl.WHITE)
+	rl.DrawTextureV(textures[.STARSHIP], position, rl.WHITE)
+	gl.PopMatrix()
 }
