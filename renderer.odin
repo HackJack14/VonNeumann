@@ -107,14 +107,23 @@ renderBackgroundTexture :: proc() {
 }
 
 renderStarShip :: proc(ship: Starship, cam: ^Camera) {
-	position := rl.Vector2 {
-		getRelX(cam, ship.position.x) - f32(textures[.STARSHIP].width)/2,
-		getRelY(cam, ship.position.y) - f32(textures[.STARSHIP].height)/2,
+	width := f32(textures[.STARSHIP].width)
+	height := f32(textures[.STARSHIP].height)
+	source := rl.Rectangle {
+		x = 0,
+		y = 0,
+		width = width,
+		height = height,
 	}
-	gl.PushMatrix()
-	gl.Translatef(position.x, position.y, 0)
-	gl.Rotatef(ship.rotation, 0, 0, -1)
-	// rl.DrawTextureEx(textures[.STARSHIP], position, ship.rotation, 1, rl.WHITE)
-	rl.DrawTextureV(textures[.STARSHIP], position, rl.WHITE)
-	gl.PopMatrix()
+	dest := rl.Rectangle {
+		x = getRelX(cam, ship.position.x),
+		y = getRelY(cam, ship.position.y),
+		width = width,
+		height = height,
+	}
+	origin := rl.Vector2 {
+		width/2,
+		height/2,
+	}
+	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, ship.rotation, rl.WHITE)
 }

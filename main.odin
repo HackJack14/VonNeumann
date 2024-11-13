@@ -55,7 +55,7 @@ main :: proc() {
 				0,
 			},
 			rotation = 0,
-			speed = 100,
+			speed = 200,
 	}
 
 	for &star in currChunks.index {
