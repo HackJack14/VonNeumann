@@ -6,6 +6,7 @@ import rl "vendor:raylib"
 textureType :: enum {
 	BACKGROUND,
 	STAR_GALAXY,
+	STARSHIP,
 }
 texturesArray :: [textureType]rl.Texture
 textures: texturesArray
@@ -27,6 +28,12 @@ initTextures :: proc() {
 	starImg := rl.GenImageColor(60, 60, rl.RED)
 	textures[.STAR_GALAXY] = rl.LoadTextureFromImage(starImg)
 	rl.UnloadImage(starImg)
+	
+	//Starship texture
+	starshipImg := rl.LoadImage("res/starship.png")
+	rl.ImageResize(&starshipImg, 30, 30)
+	textures[.STARSHIP] = rl.LoadTextureFromImage(starshipImg)
+	rl.UnloadImage(starshipImg)
 }
 
 deinitTextures :: proc() {
@@ -96,4 +103,8 @@ renderCamMode :: proc(cam: ^Camera) {
 
 renderBackgroundTexture :: proc() {
 	rl.DrawTexture(textures[.BACKGROUND], 0, 0, rl.WHITE)
+}
+
+renderStarShip :: proc(ship: Starship, cam: ^Camera) {
+	rl.DrawTextureEx(textures[.STARSHIP], getRelVec(cam, ship.position), ship.rotation, 1, rl.WHITE)
 }

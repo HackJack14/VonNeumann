@@ -17,6 +17,7 @@ cam := Camera {
 }
 
 currChunks: Chunks
+ship: Starship
 
 main :: proc() {
 	when ODIN_DEBUG {
@@ -48,6 +49,15 @@ main :: proc() {
 		createChunk(0, 0, 15),
 	}
 
+	ship = Starship {
+			position = rl.Vector2 {
+				0,
+				0,
+			},
+			rotation = 0,
+			speed = 100,
+	}
+
 	for &star in currChunks.index {
 		populateChunk(&star)
 	}
@@ -71,8 +81,9 @@ main :: proc() {
 }
 
 update :: proc(dt: f32) {
-	updateCamera(&cam, rl.GetFrameTime())
+	updateCamera(&cam, dt)
 	updateChunks(&currChunks, &cam)
+	updateStarship(&ship, &cam, dt)
 }
 
 render :: proc() {
@@ -87,6 +98,7 @@ render :: proc() {
 		case .Galaxy:
 			for chunk in currChunks.index {
 				renderChunk(chunk, &cam)
+				renderStarShip(ship, &cam)
 				if DebugMode.ChunkOuline in cam.debugModes {
 					renderDebugLines(chunk, &cam)
 				}
