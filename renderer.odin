@@ -60,9 +60,15 @@ renderStarFromGalaxy :: proc(star: StarSystem, starRadiusLocation: i32, cam: ^Ca
 	rl.SetShaderValue(shaders[.STAR_GALAXY], starRadiusLocation, &starRadius, .FLOAT)
 	vec := getRelVec(cam, star.position)
 	vec.x -= f32(textures[.STAR_GALAXY].width)/2
-	vec.y -= f32(textures[.STAR_GALAXY].width)/2
+	vec.y -= f32(textures[.STAR_GALAXY].height)/2
 	rl.DrawTextureV(textures[.STAR_GALAXY], vec, star.color)
-	// rl.DrawCircleV(getRelVec(cam, star.position), star.radius, rl.RED)
+	
+	if star.ship != nil {
+		shipPos := vec
+		shipPos.x += f32(textures[.STAR_GALAXY].width)/2
+		shipPos.y += f32(textures[.STAR_GALAXY].height)/2
+		rl.DrawTextureV(textures[.STARSHIP], shipPos, rl.WHITE)
+	}
 }
 
 renderStarSystem :: proc(star: StarSystem, cam: ^Camera) {
@@ -125,5 +131,7 @@ renderStarShip :: proc(ship: Starship, cam: ^Camera) {
 		width/2,
 		height/2,
 	}
+
+	rl.DrawLineEx(getRelVec(cam, ship.position), getRelVec(cam, ship.movingTo), 2, rl.WHITE)
 	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, ship.rotation, rl.WHITE)
 }

@@ -12,6 +12,7 @@ StarSystem :: struct {
 	radius:   f32,
 	planets:  []Planet,
 	color:    rl.Color,
+	ship:     ^Starship,
 }
 
 Chunk :: struct {
@@ -66,7 +67,8 @@ populateChunk :: proc(chunk: ^Chunk) {
 			},
 			radius   = 15,
 			planets  = nil,
-			color    = randomStarColor()
+			color    = randomStarColor(),
+			ship     = nil
 		}
 	}
 }

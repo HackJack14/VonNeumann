@@ -61,6 +61,7 @@ main :: proc() {
 	for &star in currChunks.index {
 		populateChunk(&star)
 	}
+	currChunks.named.topLeft.stars[0].ship = &ship
 
 	rl.InitWindow(screenWidth, screenHeight, "VonNeumann")
 	rl.SetWindowState({.VSYNC_HINT})
@@ -71,13 +72,14 @@ main :: proc() {
 		update(rl.GetFrameTime())
 		render()
 	}
-	rl.CloseWindow()
 	
 	for &star in currChunks.index {
 		deinitChunk(&star)
 	}
 	deinitTextures()
 	deinitShaders()
+	
+	rl.CloseWindow()
 }
 
 update :: proc(dt: f32) {
@@ -98,12 +100,12 @@ render :: proc() {
 		case .Galaxy:
 			for chunk in currChunks.index {
 				renderChunk(chunk, &cam)
-				renderStarShip(ship, &cam)
 				if DebugMode.ChunkOuline in cam.debugModes {
 					renderDebugLines(chunk, &cam)
 				}
 			}
 		case .StarSystem:
+			renderStarShip(ship, &cam)
 			renderStarSystem(cam.star, &cam)
 		}
 
