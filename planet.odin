@@ -12,7 +12,7 @@ StarSystem :: struct {
 	radius:   f32,
 	planets:  []Planet,
 	color:    rl.Color,
-	ship:     ^Starship,
+	// ship:     ^Starship,
 }
 
 Chunk :: struct {
@@ -68,7 +68,7 @@ populateChunk :: proc(chunk: ^Chunk) {
 			radius   = 15,
 			planets  = nil,
 			color    = randomStarColor(),
-			ship     = nil
+			// ship     = nil
 		}
 	}
 }
@@ -99,6 +99,18 @@ starMouseHovered :: proc(star: ^StarSystem, cam: ^Camera) -> bool {
 	return rl.CheckCollisionPointCircle(mousePos, star.position, star.radius)
 }
 
+//star will be the hovered star when true is returned; otherwise nil
+tryGetMouseHoveredStar :: proc(chunks: ^Chunks, cam: ^Camera) -> (bool, ^StarSystem) {
+	for chunk in chunks.index {
+		for &star in chunk.stars {
+			if starMouseHovered(&star, cam) {
+				return true, &star
+			}
+		}
+	}
+	return false, nil
+}
+
 deinitChunk :: proc(chunk: ^Chunk) {
 	delete(chunk.stars)
 }
@@ -109,12 +121,9 @@ deinitStarSystem :: proc(star: ^StarSystem) {
 
 updateChunks :: proc(chunks: ^Chunks, cam: ^Camera) {
 	if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) {
-		for chunk in chunks.index {
-			for &star in chunk.stars {
-				if starMouseHovered(&star, cam) {
-					switchToStarView(cam, &star)
-				}
-			}
+		isHovering, star := tryGetMouseHoveredStar(chunks, cam)
+		if isHovering {
+			switchToStarView(cam, star)
 		}
 	}
 	if rl.IsKeyPressed(.Q) {

@@ -61,18 +61,20 @@ renderStarFromGalaxy :: proc(star: StarSystem, starRadiusLocation: i32, cam: ^Ca
 	vec := getRelVec(cam, star.position)
 	vec.x -= f32(textures[.STAR_GALAXY].width)/2
 	vec.y -= f32(textures[.STAR_GALAXY].height)/2
+	rl.BeginShaderMode(shaders[.STAR_GALAXY])
 	rl.DrawTextureV(textures[.STAR_GALAXY], vec, star.color)
+	rl.EndShaderMode()
 	
-	if star.ship != nil {
-		shipPos := vec
-		shipPos.x += f32(textures[.STAR_GALAXY].width)/2
-		shipPos.y += f32(textures[.STAR_GALAXY].height)/2
-		rl.DrawTextureV(textures[.STARSHIP], shipPos, rl.WHITE)
-	}
+	// if star.ship != nil {
+	// 	shipPos := vec
+	// 	shipPos.x += f32(textures[.STAR_GALAXY].width)/2
+	// 	shipPos.y += f32(textures[.STAR_GALAXY].height)/2
+	// 	rl.DrawTextureV(textures[.STARSHIP], shipPos, rl.WHITE)
+	// }
 }
 
 renderStarSystem :: proc(star: StarSystem, cam: ^Camera) {
-	// Draw star in the middle of screen
+	//Draw star in the middle of screen
 	rl.DrawCircle(screenWidth / 2, screenHeight / 2, star.radius * 4, star.color)
 
 	//Draw planets around star
@@ -83,11 +85,9 @@ renderStarSystem :: proc(star: StarSystem, cam: ^Camera) {
 
 renderChunk :: proc(chunk: Chunk, cam: ^Camera) {
 	starRadiusLocation := rl.GetShaderLocation(shaders[.STAR_GALAXY], "starRadius")
-	rl.BeginShaderMode(shaders[.STAR_GALAXY])
 	for star in chunk.stars {
 		renderStarFromGalaxy(star, starRadiusLocation, cam)
 	}
-	rl.EndShaderMode()
 }
 
 renderDebugLines :: proc(ch: Chunk, cam: ^Camera) {
@@ -115,15 +115,10 @@ renderBackgroundTexture :: proc() {
 renderStarShip :: proc(ship: Starship, cam: ^Camera) {
 	width := f32(textures[.STARSHIP].width)
 	height := f32(textures[.STARSHIP].height)
+	rotation := ship.rotation
 	source := rl.Rectangle {
 		x = 0,
 		y = 0,
-		width = width,
-		height = height,
-	}
-	dest := rl.Rectangle {
-		x = getRelX(cam, ship.position.x),
-		y = getRelY(cam, ship.position.y),
 		width = width,
 		height = height,
 	}
@@ -131,7 +126,25 @@ renderStarShip :: proc(ship: Starship, cam: ^Camera) {
 		width/2,
 		height/2,
 	}
+	dest := rl.Rectangle {
+		width = width,
+		height = height,
+	}
 
-	rl.DrawLineEx(getRelVec(cam, ship.position), getRelVec(cam, ship.movingTo), 2, rl.WHITE)
-	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, ship.rotation, rl.WHITE)
+	if ship.residingStar == nil {
+		//Draw ship normally when in empty space
+		dest.x = getRelX(cam, ship.position.x);
+		dest.y = getRelY(cam, ship.position.y);
+	} else {
+		//Draw ship on star if it is inside the starsystem
+		dest.x = getRelX(cam, ship.residingStar.position.x + width/2)
+		dest.y = getRelY(cam, ship.residingStar.position.y + height/2)
+		rotation = 0
+	}
+
+	if ship.moving {
+		rl.DrawLineEx(getRelVec(cam, ship.position), getRelVec(cam, ship.movingTo), 2, rl.WHITE)
+	}
+	
+	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, rotation, rl.WHITE)
 }

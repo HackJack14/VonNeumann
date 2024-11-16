@@ -61,8 +61,8 @@ main :: proc() {
 	for &star in currChunks.index {
 		populateChunk(&star)
 	}
-	currChunks.named.topLeft.stars[0].ship = &ship
-
+	setResidingStar(&ship, &currChunks.named.topLeft.stars[0])
+	
 	rl.InitWindow(screenWidth, screenHeight, "VonNeumann")
 	rl.SetWindowState({.VSYNC_HINT})
 	initTextures()
@@ -85,7 +85,7 @@ main :: proc() {
 update :: proc(dt: f32) {
 	updateCamera(&cam, dt)
 	updateChunks(&currChunks, &cam)
-	updateStarship(&ship, &cam, dt)
+	updateStarship(&ship, &currChunks, &cam, dt)
 }
 
 render :: proc() {
@@ -105,9 +105,9 @@ render :: proc() {
 				}
 			}
 		case .StarSystem:
-			renderStarShip(ship, &cam)
 			renderStarSystem(cam.star, &cam)
 		}
+		renderStarShip(ship, &cam)
 
 		rl.DrawFPS(10, 10)
 
