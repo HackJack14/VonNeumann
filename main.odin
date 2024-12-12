@@ -50,19 +50,20 @@ main :: proc() {
 	}
 
 	ship = Starship {
-			position = rl.Vector2 {
-				0,
-				0,
-			},
-			rotation = 0,
-			speed = 200,
+		shipGal = ShipGalaxy {
+			base = BaseShip{position = rl.Vector2{0, 0}, rotation = 0, speed = 200},
+			targetStar = &currChunks.named.topLeft.stars[0],
+			status = .RESIDING,
+		},
+		shipSys = ShipSystem {
+			base = BaseShip{position = rl.Vector2{200, 200}, rotation = 0, speed = 200},
+		},
 	}
 
 	for &star in currChunks.index {
 		populateChunk(&star)
 	}
-	setResidingStar(&ship, &currChunks.named.topLeft.stars[0])
-	
+
 	rl.InitWindow(screenWidth, screenHeight, "VonNeumann")
 	rl.SetWindowState({.VSYNC_HINT})
 	initTextures()
@@ -72,44 +73,52 @@ main :: proc() {
 		update(rl.GetFrameTime())
 		render()
 	}
-	
+
 	for &star in currChunks.index {
 		deinitChunk(&star)
 	}
 	deinitTextures()
 	deinitShaders()
-	
+
 	rl.CloseWindow()
 }
 
 update :: proc(dt: f32) {
 	updateCamera(&cam, dt)
 	updateChunks(&currChunks, &cam)
-	updateStarship(&ship, &currChunks, &cam, dt)
+	switch cam.mode {
+	case .Galaxy:
+		updateShipGalaxy(&ship, &cam, dt)
+	case .StarSystem:
+		updateShipSystem(&ship, &cam, dt)
+	}
 }
 
 render :: proc() {
 	rl.BeginDrawing()
 
-		rl.ClearBackground(rl.WHITE)
-		renderBackgroundTexture()
+	rl.ClearBackground(rl.WHITE)
+	renderBackgroundTexture()
 
-		renderCamMode(&cam)
+	renderCamMode(&cam)
 
-		switch cam.mode {
-		case .Galaxy:
-			for chunk in currChunks.index {
-				renderChunk(chunk, &cam)
-				if DebugMode.ChunkOuline in cam.debugModes {
-					renderDebugLines(chunk, &cam)
-				}
+	switch cam.mode {
+	case .Galaxy:
+		for chunk in currChunks.index {
+			renderChunk(chunk, &cam)
+			if DebugMode.ChunkOuline in cam.debugModes {
+				renderDebugLines(chunk, &cam)
 			}
-		case .StarSystem:
-			renderStarSystem(cam.star, &cam)
 		}
-		renderStarShip(ship, &cam)
+		renderShipGalaxy(&ship.shipGal, &cam)
+	case .StarSystem:
+		renderStarSystem(cam.star^, &cam)
+		if ship.shipSys.visible {
+			renderShipSystem(&ship.shipSys, &cam)
+		}
+	}
 
-		rl.DrawFPS(10, 10)
+	rl.DrawFPS(10, 10)
 
 	rl.EndDrawing()
 }

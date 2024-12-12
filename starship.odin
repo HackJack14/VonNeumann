@@ -1,87 +1,93 @@
 package main
 
-import rl "vendor:raylib"
-import "core:math"
 import "core:fmt"
+import "core:math"
+import rl "vendor:raylib"
+
+shipStarStatus :: enum {
+	RESIDING,
+	TRAVELLING,
+}
 
 Starship :: struct {
-  position: rl.Vector2,
-  rotation: f32,
-  speed: f32,
-  moving: bool,
-  movingTo: rl.Vector2,
-  residingStar: ^StarSystem,
-  travellingStar: ^StarSystem,
+	shipSys: ShipSystem,
+	shipGal: ShipGalaxy,
 }
 
-updateStarship :: proc(ship: ^Starship, chunks: ^Chunks, cam: ^Camera, dt: f32) {
-  if rl.IsKeyPressed(.K) {
-    fmt.println(ship.position)
-    if ship.travellingStar != nil {
-      fmt.println("found travelling star")
-      fmt.println(ship.travellingStar.position)
-    } else {
-      fmt.println("found residing star")
-      fmt.println(ship.residingStar.position)
-    }
-  }
-  
-  if rl.IsMouseButtonPressed(rl.MouseButton.RIGHT) { 
-    mousePos := getAbsVec(cam, rl.GetMousePosition())
-    switch cam.mode {
-      case .Galaxy:
-        isHovering, star := tryGetMouseHoveredStar(chunks, cam)
-        if isHovering {
-          setResidingStar(ship, nil)
-          ship.travellingStar = star
-          ship.movingTo = star.position
-          rotateToVec(ship, ship.movingTo)
-          ship.moving = true
-        }
-      case .StarSystem:
-        ship.movingTo = mousePos
-        rotateToVec(ship, ship.movingTo)
-        ship.moving = true
-    }
-  }
-  if ship.moving {
-    moveToVec(ship, ship.movingTo, dt)
-    if ship.travellingStar != nil {
-      updateArrivalTravellingStar(ship)
-    }
-  }
+BaseShip :: struct {
+	position: rl.Vector2,
+	rotation: f32,
+	speed:    f32,
+	moving:   bool,
+	movingTo: rl.Vector2,
 }
 
-rotateToVec :: proc(ship: ^Starship, vec: rl.Vector2) {
-  vecRel := ship.position - vec
-  angle := math.atan2(vecRel.x, vecRel.y)
-  angle = -angle * 180/math.PI
-  ship.rotation = angle
+ShipSystem :: struct {
+	base:    BaseShip,
+	visible: bool,
 }
 
-moveToVec :: proc(ship: ^Starship, vec: rl.Vector2, dt: f32) {
-  speed := ship.speed * dt
-  distance := rl.Vector2Distance(ship.position, vec)
-  delta := rl.Vector2Normalize(vec - ship.position)
-  if speed < distance {
-    delta = delta * speed
-    ship.position = ship.position + delta
-  } else {
-    ship.position = vec
-    ship.moving = false
-  }
+ShipGalaxy :: struct {
+	base:       BaseShip,
+	targetStar: ^StarSystem,
+	status:     shipStarStatus,
 }
 
-updateArrivalTravellingStar :: proc(ship: ^Starship) {
-  if ship.position == ship.travellingStar.position {
-    setResidingStar(ship, ship.travellingStar)
-  }
-} 
+updateShipSystem :: proc(ship: ^Starship, cam: ^Camera, dt: f32) {
+	if rl.IsMouseButtonPressed(rl.MouseButton.RIGHT) {
+		mousePos := getAbsVec(cam, rl.GetMousePosition())
+		ship.shipSys.base.movingTo = mousePos
+		rotateToVec(&ship.shipSys.base, ship.shipSys.base.movingTo)
+		ship.shipSys.base.moving = true
+	}
 
-setResidingStar :: proc(ship: ^Starship, star: ^StarSystem) {
-  ship.residingStar = star
-  ship.travellingStar = nil
-  if star != nil {
-    ship.position = star.position
-  }
+	if ship.shipSys.base.moving {
+		moveToVec(&ship.shipSys.base, ship.shipSys.base.movingTo, dt)
+	}
+
+	ship.shipSys.visible = ship.shipGal.targetStar == cam.star
+}
+
+updateShipGalaxy :: proc(ship: ^Starship, cam: ^Camera, dt: f32) {
+	if rl.IsMouseButtonPressed(rl.MouseButton.RIGHT) {
+		mousePos := getAbsVec(cam, rl.GetMousePosition())
+		isHovering, star := tryGetMouseHoveredStar(&currChunks, cam)
+		if isHovering {
+			ship.shipGal.targetStar = star
+			ship.shipGal.base.movingTo = star.position
+			rotateToVec(&ship.shipGal.base, ship.shipGal.base.movingTo)
+			ship.shipGal.base.moving = true
+			ship.shipGal.status = .TRAVELLING
+		}
+	}
+	if ship.shipGal.base.moving {
+		moveToVec(&ship.shipGal.base, ship.shipGal.base.movingTo, dt)
+		if ship.shipGal.status == .TRAVELLING {
+			if ship.shipGal.base.position == ship.shipGal.targetStar.position {
+				ship.shipGal.status = .RESIDING
+			}
+		}
+	} else {
+		ship.shipGal.base.position = ship.shipGal.targetStar.position
+	}
+}
+
+rotateToVec :: proc(ship: ^BaseShip, vec: rl.Vector2) {
+	vecRel := ship.position - vec
+	angle := math.atan2(vecRel.x, vecRel.y)
+	angle = -angle * 180 / math.PI
+	ship.rotation = angle
+}
+
+moveToVec :: proc(ship: ^BaseShip, vec: rl.Vector2, dt: f32) {
+	speed := ship.speed * dt
+	distance := rl.Vector2Distance(ship.position, vec)
+	delta := rl.Vector2Normalize(vec - ship.position)
+	if speed < distance {
+		delta = delta * speed
+		ship.position = ship.position + delta
+	} else {
+		ship.position = vec
+		ship.moving = false
+	}
 }

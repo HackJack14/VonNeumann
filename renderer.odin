@@ -29,7 +29,7 @@ initTextures :: proc() {
 	starImg := rl.GenImageColor(60, 60, rl.RED)
 	textures[.STAR_GALAXY] = rl.LoadTextureFromImage(starImg)
 	rl.UnloadImage(starImg)
-	
+
 	//Starship texture
 	starshipImg := rl.LoadImage("res/starship.png")
 	rl.ImageResize(&starshipImg, 35, 40)
@@ -38,9 +38,9 @@ initTextures :: proc() {
 }
 
 deinitTextures :: proc() {
-  for texture in textures {
-    rl.UnloadTexture(texture)
-  }
+	for texture in textures {
+		rl.UnloadTexture(texture)
+	}
 }
 
 initShaders :: proc() {
@@ -56,15 +56,15 @@ deinitShaders :: proc() {
 
 renderStarFromGalaxy :: proc(star: StarSystem, starRadiusLocation: i32, cam: ^Camera) {
 	starRadius := star.radius
-	starRadius = starRadius/f32(textures[.STAR_GALAXY].width)
+	starRadius = starRadius / f32(textures[.STAR_GALAXY].width)
 	rl.SetShaderValue(shaders[.STAR_GALAXY], starRadiusLocation, &starRadius, .FLOAT)
 	vec := getRelVec(cam, star.position)
-	vec.x -= f32(textures[.STAR_GALAXY].width)/2
-	vec.y -= f32(textures[.STAR_GALAXY].height)/2
+	vec.x -= f32(textures[.STAR_GALAXY].width) / 2
+	vec.y -= f32(textures[.STAR_GALAXY].height) / 2
 	rl.BeginShaderMode(shaders[.STAR_GALAXY])
 	rl.DrawTextureV(textures[.STAR_GALAXY], vec, star.color)
 	rl.EndShaderMode()
-	
+
 	// if star.ship != nil {
 	// 	shipPos := vec
 	// 	shipPos.x += f32(textures[.STAR_GALAXY].width)/2
@@ -112,39 +112,66 @@ renderBackgroundTexture :: proc() {
 	rl.DrawTexture(textures[.BACKGROUND], 0, 0, rl.WHITE)
 }
 
-renderStarShip :: proc(ship: Starship, cam: ^Camera) {
+renderShipGalaxy :: proc(ship: ^ShipGalaxy, cam: ^Camera) {
 	width := f32(textures[.STARSHIP].width)
 	height := f32(textures[.STARSHIP].height)
-	rotation := ship.rotation
+	rotation: f32 = 0
 	source := rl.Rectangle {
-		x = 0,
-		y = 0,
-		width = width,
+		x      = 0,
+		y      = 0,
+		width  = width,
 		height = height,
 	}
-	origin := rl.Vector2 {
-		width/2,
-		height/2,
-	}
+	origin := rl.Vector2{width / 2, height / 2}
 	dest := rl.Rectangle {
-		width = width,
+		width  = width,
 		height = height,
 	}
 
-	if ship.residingStar == nil {
-		//Draw ship normally when in empty space
-		dest.x = getRelX(cam, ship.position.x);
-		dest.y = getRelY(cam, ship.position.y);
-	} else {
-		//Draw ship on star if it is inside the starsystem
-		dest.x = getRelX(cam, ship.residingStar.position.x + width/2)
-		dest.y = getRelY(cam, ship.residingStar.position.y + height/2)
+	switch ship.status {
+	case .RESIDING:
 		rotation = 0
+		dest.x = getRelX(cam, ship.targetStar.position.x + width / 2)
+		dest.y = getRelY(cam, ship.targetStar.position.y + height / 2)
+	case .TRAVELLING:
+		rotation = ship.base.rotation
+		dest.x = getRelX(cam, ship.base.position.x)
+		dest.y = getRelY(cam, ship.base.position.y)
 	}
 
-	if ship.moving {
-		rl.DrawLineEx(getRelVec(cam, ship.position), getRelVec(cam, ship.movingTo), 2, rl.WHITE)
+	if ship.base.moving {
+		rl.DrawLineEx(
+			getRelVec(cam, ship.base.position),
+			getRelVec(cam, ship.base.movingTo),
+			2,
+			rl.WHITE,
+		)
 	}
-	
+
+	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, rotation, rl.WHITE)
+}
+
+renderShipSystem :: proc(ship: ^ShipSystem, cam: ^Camera) {
+	width := f32(textures[.STARSHIP].width)
+	height := f32(textures[.STARSHIP].height)
+	rotation := ship.base.rotation
+	source := rl.Rectangle {
+		x      = 0,
+		y      = 0,
+		width  = width,
+		height = height,
+	}
+	origin := rl.Vector2{width / 2, height / 2}
+	dest := rl.Rectangle {
+		x      = ship.base.position.x,
+		y      = ship.base.position.y,
+		width  = width,
+		height = height,
+	}
+
+	if ship.base.moving {
+		rl.DrawLineEx(ship.base.position, ship.base.movingTo, 2, rl.WHITE)
+	}
+
 	rl.DrawTexturePro(textures[.STARSHIP], source, dest, origin, rotation, rl.WHITE)
 }
