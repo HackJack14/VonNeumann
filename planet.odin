@@ -129,7 +129,7 @@ updateChunks :: proc(chunks: ^Chunks, cam: ^Camera) {
 	if rl.IsKeyPressed(.Q) {
 		switchToGalaxyView(cam)
 	}
-	loadNewChunks(&chunks.named, cam)
+	// loadNewChunks(&chunks.named, cam)
 }
 
 loadNewChunks :: proc(chunks: ^ChunksNamed, cam: ^Camera) {

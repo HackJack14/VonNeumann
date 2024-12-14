@@ -18,6 +18,7 @@ cam := Camera {
 
 currChunks: Chunks
 ship: Starship
+button: ShipButton
 
 main :: proc() {
 	when ODIN_DEBUG {
@@ -60,6 +61,18 @@ main :: proc() {
 		},
 	}
 
+	button = ShipButton {
+		ship = &ship,
+		bounds = rl.Rectangle{x = 0, y = 0, width = 75, height = 75},
+		hovered = false,
+		callback = proc(ship: ^Starship) {
+			cam.bounds.x = ship.shipGal.base.position.x - cam.bounds.width / 2
+			cam.bounds.y = ship.shipGal.base.position.y - cam.bounds.height / 2
+		},
+	}
+	button.bounds.x = f32(screenWidth) / 2 - button.bounds.width / 2
+	button.bounds.y = f32(screenHeight) - button.bounds.height
+
 	for &star in currChunks.index {
 		populateChunk(&star)
 	}
@@ -74,8 +87,13 @@ main :: proc() {
 		render()
 	}
 
-	for &star in currChunks.index {
-		deinitChunk(&star)
+	switch cam.mode {
+	case .Galaxy:
+	case .StarSystem:
+		delete(cam.star.planets)
+	}
+	for &chunk in currChunks.index {
+		deinitChunk(&chunk)
 	}
 	deinitTextures()
 	deinitShaders()
@@ -92,18 +110,19 @@ update :: proc(dt: f32) {
 	case .StarSystem:
 		updateShipSystem(&ship, &cam, dt)
 	}
+	updateShipButton(&button)
 }
 
 render :: proc() {
 	rl.BeginDrawing()
 
 	rl.ClearBackground(rl.WHITE)
-	renderBackgroundTexture()
 
 	renderCamMode(&cam)
 
 	switch cam.mode {
 	case .Galaxy:
+		renderBackgroundTexture()
 		for chunk in currChunks.index {
 			renderChunk(chunk, &cam)
 			if DebugMode.ChunkOuline in cam.debugModes {
@@ -112,11 +131,13 @@ render :: proc() {
 		}
 		renderShipGalaxy(&ship.shipGal, &cam)
 	case .StarSystem:
+		renderStarBackgroundTexture()
 		renderStarSystem(cam.star^, &cam)
 		if ship.shipSys.visible {
 			renderShipSystem(&ship.shipSys, &cam)
 		}
 	}
+	renderShipButton(button)
 
 	rl.DrawFPS(10, 10)
 

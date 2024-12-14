@@ -6,6 +6,7 @@ import gl "vendor:raylib/rlgl"
 
 textureType :: enum {
 	BACKGROUND,
+	STARBACKGROUND,
 	STAR_GALAXY,
 	STARSHIP,
 }
@@ -24,6 +25,12 @@ initTextures :: proc() {
 	rl.ImageResize(&backgroundImg, screenWidth, screenHeight)
 	textures[.BACKGROUND] = rl.LoadTextureFromImage(backgroundImg)
 	rl.UnloadImage(backgroundImg)
+
+	//Star Background texture
+	starBackgroundImg := rl.LoadImage("res/starbackground.png")
+	rl.ImageResize(&starBackgroundImg, screenWidth, screenHeight)
+	textures[.STARBACKGROUND] = rl.LoadTextureFromImage(starBackgroundImg)
+	rl.UnloadImage(starBackgroundImg)
 
 	//Star texture
 	starImg := rl.GenImageColor(60, 60, rl.RED)
@@ -112,6 +119,10 @@ renderBackgroundTexture :: proc() {
 	rl.DrawTexture(textures[.BACKGROUND], 0, 0, rl.WHITE)
 }
 
+renderStarBackgroundTexture :: proc() {
+	rl.DrawTexture(textures[.STARBACKGROUND], 0, 0, rl.WHITE)
+}
+
 renderShipGalaxy :: proc(ship: ^ShipGalaxy, cam: ^Camera) {
 	width := f32(textures[.STARSHIP].width)
 	height := f32(textures[.STARSHIP].height)
@@ -152,6 +163,10 @@ renderShipGalaxy :: proc(ship: ^ShipGalaxy, cam: ^Camera) {
 }
 
 renderShipSystem :: proc(ship: ^ShipSystem, cam: ^Camera) {
+	if !ship.visible {
+		return
+	}
+
 	width := f32(textures[.STARSHIP].width)
 	height := f32(textures[.STARSHIP].height)
 	rotation := ship.base.rotation
